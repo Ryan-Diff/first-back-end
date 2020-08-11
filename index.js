@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require ('cors');
-const weatherData = require('./data/weather.js');
 const { json } = require('express');
 const request = require('superagent');
 const app = express();
@@ -12,7 +11,8 @@ app.use(cors());
 app.use(express.static('public'));
 
 const {
-    GEOCODE_API_KEY
+    GEOCODE_API_KEY,
+    WEATHER_API_KEY,
 } = process.env;
 
 async function getLatLong(cityName) {
@@ -25,9 +25,10 @@ async function getLatLong(cityName) {
     };
 }
 
-function getWeather(lat, lon) {
-    const data = weatherData.data;
-    const forecastArray = data.map((weatherItem) => {
+async function getWeather(lat, lon) {
+    const response = await request.get(`https://api.weatherbit.io/v2.0/forecast/daily?&lat=${lat}&lon=${lon}key=${WEATHER_API_KEY}`);
+
+    const forecastArray = response.body.data.map((weatherItem) => {
         return { 
             forecast: weatherItem.weather.description,
             time: new Date(weatherItem.ts * 1000)
@@ -37,12 +38,12 @@ function getWeather(lat, lon) {
     return forecastArray;
 }
 
-app.get('/weather', (req, res) => {
+app.get('/weather', async(req, res) => {
     try {
         const userLat = req.query.latitude;
         const userLon = req.query.longitude;
   
-        const mungedData = getWeather(userLat, userLon);
+        const mungedData = await getWeather(userLat, userLon);
         res.json(mungedData);
     } catch (e) {
         res.status(500), json({ eroor: e.message });
