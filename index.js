@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require ('cors');
-const geoData = require('./data/geo.js');
 const weatherData = require('./data/weather.js');
 const { json } = require('express');
+const request = require('superagent');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -11,13 +11,17 @@ app.use(cors());
 
 app.use(express.static('public'));
 
-function getLatLong(cityName) {
-    const city = geoData[0];
+const {
+    GEOCODE_API_KEY
+} = process.env;
 
+async function getLatLong(cityName) {
+    const response = await request.get(`https://us1.locationiq.com/v1/search.php?key={GEOCODE_API_KEY}&q={cityName}&format=json`);
+    const city = response.body[0];
     return {
         formatted_query: city.display_name,
         latitude: city.lat,
-        longitude: city.lon
+        longitude: city.lon,
     };
 }
 
@@ -47,11 +51,11 @@ app.get('/weather', (req, res) => {
     
 });
 
-app.get('/location', (req, res) => {
+app.get('/location', async(req, res) => {
     try {
         const userInput = req.query.search;
     
-        const mungedData = getLatLong(userInput);
+        const mungedData = await getLatLong(userInput);
         res.json(mungedData);
 
     } catch (e) {
