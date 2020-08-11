@@ -20,6 +20,10 @@
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "jest": "^26.3.0",
+    "just": "^0.1.8",
+    "superagent": "^6.0.0",
+    "supertest": "^4.0.2"
   }
 }
