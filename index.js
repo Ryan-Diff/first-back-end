@@ -14,6 +14,7 @@ const {
     GEOCODE_API_KEY,
     WEATHER_API_KEY,
     HIKING_API_KEY,
+    YELP_API_KEY,
 } = process.env;
 
 async function getLatLong(cityName) {
@@ -58,6 +59,34 @@ async function getTrails(lat, lon) {
     });
     return hikingArray;
 }
+
+async function getYelp(lat, lon) {
+    const response = await request.get(`https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${lon}`).set('Authorization', `Bearer ${YELP_API_KEY}`);
+
+    let reviewData = response.body.businesses;
+    let reviewArray = reviewData.map((review) => {
+        return {
+            name: review.name,
+            image_url: review.image_url,
+            price: review.price,
+            rating: review.rating,
+            url: review.url,
+        };
+    });
+    return reviewArray;
+}
+
+app.get('/reviews', async(req, res) => {
+    try {
+        const userLat = req.query.latitude;
+        const userLon = req.query.longitude;
+        const mungedData = await getYelp(userLat, userLon);
+        res.json(mungedData);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 
 app.get('/trails', async(req, res) => {
     try {
